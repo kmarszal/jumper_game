@@ -10,11 +10,19 @@ var platform1 = new Path.Rectangle({
 	fillColor: 'black'
 });
 
+var currentHeight = 0;
+var generatedAt = 0;
+/*
 var platform2 = new Path.Rectangle({
 	point: [50, 0],
 	size: [100, 10],
 	fillColor: 'black'
 });
+*/
+
+function getRndInteger(min, max) {
+  return Math.floor(Math.random() * (max - min + 1) ) + min;
+}
 
 function checkCollision(platform) {
 	//left wall
@@ -103,10 +111,26 @@ var text1 = new PointText({
 	fillColor: 'blue'
 });
 
+var text2 = new PointText({
+	point: view.center - new Point(200, -30),
+	justification: 'center',
+	fontSize: 30,
+	fillColor: 'blue'
+});
+
 var platformDescendVector = new Point(0, -0.5);
 
+var platforms = new Array();
+function generatePlatform() {
+	platforms.push(new Path.Rectangle({
+		point: [getRndInteger(0, view.size.width), 0],
+		size: [getRndInteger(view.size.width/20, view.size.width/3), getRndInteger(5, 20)],
+		fillColor: 'black'
+	}));
+}
+
 function onFrame(event) {
-	platform2.position -= platformDescendVector;
+	//platform2.position -= platformDescendVector;
 	speedVector -= gravity;
 	player.position += speedVector;
 	
@@ -119,8 +143,12 @@ function onFrame(event) {
 		player.position.x = view.size.width - 15;
 	}
 	if(player.position.y < 0 && speedVector.y < 0) {
-		speedVector.y = -speedVector.y / 2;
-		player.position.y = 0;
+		platform1.position.y -= player.position.y;
+		platforms.forEach( function(platform) {
+			platform.position.y -= player.position.y;
+		});
+		currentHeight -= player.position.y;
+		player.position.y -= player.position.y;
 	}
 	if(player.position.y > view.size.height - 15 && speedVector.y > 0) {
 		if(Math.sqrt(Math.pow(speedVector.x, 2) + Math.pow(speedVector.y, 2)) < 2.5) {
@@ -140,12 +168,26 @@ function onFrame(event) {
 		player.position.y = view.size.height - 15;
 	}
 	
-	checkCollision(platform1);
-	checkCollision(platform2);
-	
-	if(platform2.position.y > view.size.height) {
-		platform2.position.y = 0;
+	if(currentHeight > 0 && currentHeight - generatedAt > 200) {
+		generatedAt = currentHeight;
+		generatePlatform();
+		text1.content = platforms.length;
 	}
+	
+	checkCollision(platform1);
+	
+	platforms = platforms.slice(-10);
+	
+	platforms.forEach( function(platform) {
+		checkCollision(platform);
+	});
+	
+	text2.content = currentHeight;
+	
+	//checkCollision(platform2);
+	/*if(platform2.position.y > view.size.height) {
+		platform2.position.y = 0;
+	}*/
 }
 
 function onMouseDown(event) {
@@ -173,6 +215,21 @@ function onMouseUp(event) {
 }
 
 function onResize() {
-    platform1.position.y = 600;
-	platform2.position.y = 0;
+    leftBorder = new Path.Rectangle({
+		point: [0, 0],
+		size: [10, view.size.height],
+		fillColor: 'black'
+	});
+
+	rightBorder = new Path.Rectangle({
+		point: [view.size.width - 10, 0],
+		size: [10, view.size.height],
+		fillColor: 'black'
+	});
+
+	startPlatform = new Path.Rectangle({
+		point: [0, view.size.height - 10],
+		size: [view.size.width, 10],
+		fillColor: 'black'
+	}); 
 }
