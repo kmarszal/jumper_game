@@ -6,13 +6,6 @@ var startPlatform = new Path.Rectangle({
 
 var currentHeight = 0;
 var generatedAt = 0;
-/*
-var platform2 = new Path.Rectangle({
-	point: [50, 0],
-	size: [100, 10],
-	fillColor: 'black'
-});
-*/
 
 function getRndInteger(min, max) {
   return Math.floor(Math.random() * (max - min + 1) ) + min;
@@ -40,8 +33,8 @@ function checkCollision(platform) {
 		player.position.x = platform.position.x + platform.bounds.width/2;
 	}
 	//ceiling
-	if(player.position.y < platform.position.y + platform.bounds.height/2 + 10 &&
-	player.position.y > platform.position.y + platform.bounds.height/2 && 
+	if(player.position.y < platform.position.y + platform.bounds.height/2 &&
+	player.position.y > platform.position.y + platform.bounds.height/2 - 10 && 
 	player.position.x < platform.position.x + platform.bounds.width/2 && 
 	player.position.x > platform.position.x - platform.bounds.width/2 &&
 	speedVector.y < 0) {
@@ -112,12 +105,12 @@ var text2 = new PointText({
 	fillColor: 'blue'
 });
 
-var platformDescendVector = new Point(0, -0.5);
+var descendVector = new Point(0, -0.5);
 
 var platforms = new Array();
 function generatePlatform() {
 	platforms.push(new Path.Rectangle({
-		point: [getRndInteger(0, view.size.width), 0],
+		point: [getRndInteger(0, view.size.width), -20],
 		size: [getRndInteger(view.size.width/20, view.size.width/3), getRndInteger(5, 20)],
 		fillColor: 'black'
 	}));
@@ -125,7 +118,7 @@ function generatePlatform() {
 
 function generateStartingPlatform(height) {
 	platforms.push(new Path.Rectangle({
-		point: [getRndInteger(0, view.size.width), height],
+		point: [getRndInteger(0, view.size.width), height - 20],
 		size: [getRndInteger(view.size.width/20, view.size.width/3), getRndInteger(5, 20)],
 		fillColor: 'black'
 	}));
@@ -137,11 +130,21 @@ while(heightNow < view.size.height){
 	heightNow += 200;
 }
 
+var descending = false;
+
 function onFrame(event) {
 	scrollingHeight = view.size.height / 4;
 	//platform2.position -= platformDescendVector;
 	speedVector -= gravity;
 	player.position += speedVector;
+	
+	if(descending) {
+		player.position -= descendVector;
+		platforms.forEach(function(platform) {
+			platform.position -= descendVector;
+		});
+		currentHeight -= descendVector.y;
+	}
 	
 	if(player.position.x < 15 && speedVector.x < 0) {
 		speedVector.x = -speedVector.x / 2;
@@ -177,6 +180,7 @@ function onFrame(event) {
 	}
 	
 	if(currentHeight > 0 && currentHeight - generatedAt > 200) {
+		descending = true;
 		generatedAt = currentHeight;
 		generatePlatform();
 		text1.content = platforms.length;
@@ -189,11 +193,6 @@ function onFrame(event) {
 	});
 	
 	text2.content = currentHeight;
-	
-	//checkCollision(platform2);
-	/*if(platform2.position.y > view.size.height) {
-		platform2.position.y = 0;
-	}*/
 }
 
 function onMouseDown(event) {
