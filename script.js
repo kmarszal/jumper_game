@@ -51,8 +51,9 @@ function checkCollision(platform) {
 		
 		if(Math.sqrt(Math.pow(speedVector.x, 2) + Math.pow(speedVector.y, 2)) < 2.5) {
 			speedVector = new Point(0, 0);
+			jumpsMidAir = 0;
 			if(speedArrow) {
-				speedArrow.strokeColor = 'green';
+				speedArrow.strokeColor = 'violet';
 			}
 		}
 		speedVector.y = -speedVector.y / 2;
@@ -131,6 +132,8 @@ while(heightNow < view.size.height){
 }
 
 var descending = false;
+var jumpsMidAir = 0;
+var jumpsLimit = 5;
 
 function onFrame(event) {
 	scrollingHeight = view.size.height / 4;
@@ -164,8 +167,9 @@ function onFrame(event) {
 	if(player.position.y > view.size.height - 15 && speedVector.y > 0) {
 		if(Math.sqrt(Math.pow(speedVector.x, 2) + Math.pow(speedVector.y, 2)) < 2.5) {
 			speedVector = new Point(0, 0);
+			jumpsMidAir = 0;
 			if(speedArrow) {
-				speedArrow.strokeColor = 'green';
+				speedArrow.strokeColor = 'violet';
 			}
 		}
 		speedVector.y = -speedVector.y / 2;
@@ -199,9 +203,32 @@ function onMouseDown(event) {
 	speedArrow = new Path();
 	speedArrow.strokeWidth = 3;
 	if (speedVector.x == 0 && speedVector.y == 0) {
-		speedArrow.strokeColor = 'green';
+		speedArrow.strokeColor = 'violet';
 	} else {
-		speedArrow.strokeColor = 'red';
+		switch(jumpsMidAir) {
+			case 0:
+			speedArrow.strokeColor = 'blue';
+			break;
+			
+			case 1:
+			speedArrow.strokeColor = 'green';
+			break;
+			
+			case 2:
+			speedArrow.strokeColor = 'yellow';
+			break;
+			
+			case 3:
+			speedArrow.strokeColor = 'orange';
+			break;
+			
+			case 4:
+			speedArrow.strokeColor = 'red';
+			break;
+			
+			default:
+			speedArrow.strokeColor = 'black';
+		}
 	}
 	speedArrow.add(event.point);
 }
@@ -215,6 +242,9 @@ function onMouseUp(event) {
 	if (speedVector.x == 0 && speedVector.y == 0) {
 		speedVector = speedArrow.lastSegment.point - speedArrow.firstSegment.point;
 		speedVector /= 10;
+	} else if (jumpsMidAir++ < jumpsLimit) {
+		speedVector += (speedArrow.lastSegment.point - speedArrow.firstSegment.point);
+		speedVector /= (jumpsMidAir + 1) * 10;
 	}
 	speedArrow.remove();
 }
