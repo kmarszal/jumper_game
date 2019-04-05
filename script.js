@@ -4,12 +4,6 @@ var startPlatform = new Path.Rectangle({
 	fillColor: 'black'
 });
 
-var platform1 = new Path.Rectangle({
-	point: [800, 600],
-	size: [400, 200],
-	fillColor: 'black'
-});
-
 var currentHeight = 0;
 var generatedAt = 0;
 /*
@@ -129,7 +123,22 @@ function generatePlatform() {
 	}));
 }
 
+function generateStartingPlatform(height) {
+	platforms.push(new Path.Rectangle({
+		point: [getRndInteger(0, view.size.width), height],
+		size: [getRndInteger(view.size.width/20, view.size.width/3), getRndInteger(5, 20)],
+		fillColor: 'black'
+	}));
+}
+
+var heightNow = 0;
+while(heightNow < view.size.height){ 
+	generateStartingPlatform(heightNow);
+	heightNow += 200;
+}
+
 function onFrame(event) {
+	scrollingHeight = view.size.height / 4;
 	//platform2.position -= platformDescendVector;
 	speedVector -= gravity;
 	player.position += speedVector;
@@ -142,13 +151,12 @@ function onFrame(event) {
 		speedVector.x = -speedVector.x / 2;
 		player.position.x = view.size.width - 15;
 	}
-	if(player.position.y < 0 && speedVector.y < 0) {
-		platform1.position.y -= player.position.y;
+	if(player.position.y < scrollingHeight && speedVector.y < 0) {
 		platforms.forEach( function(platform) {
-			platform.position.y -= player.position.y;
+			platform.position.y -= player.position.y - scrollingHeight;
 		});
-		currentHeight -= player.position.y;
-		player.position.y -= player.position.y;
+		currentHeight -= player.position.y - scrollingHeight;
+		player.position.y -= player.position.y - scrollingHeight;
 	}
 	if(player.position.y > view.size.height - 15 && speedVector.y > 0) {
 		if(Math.sqrt(Math.pow(speedVector.x, 2) + Math.pow(speedVector.y, 2)) < 2.5) {
@@ -173,8 +181,6 @@ function onFrame(event) {
 		generatePlatform();
 		text1.content = platforms.length;
 	}
-	
-	checkCollision(platform1);
 	
 	platforms = platforms.slice(-10);
 	
