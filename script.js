@@ -2,6 +2,7 @@ var currentHeight = 0;
 var generatedAt = 0;
 var starGeneratedAt = 0;
 var gameOver = false;
+var gameWon = false;
 var gameOverBlock;
 var stop = false;
 
@@ -76,6 +77,11 @@ function beginGameOverAnimation() {
 	});
 }
 
+function beginGameWonAnimation() {
+	descendVector = new Point(0, -10);
+	gameWon = true;
+}
+
 var star;
 function generateStar() {
 	star = new Path.Star(new Point(getRndInteger(20, view.size.width - 20), -20), 5, 40, 10);
@@ -132,6 +138,44 @@ function generateStartingPlatform(height) {
 	}));
 }
 
+var endingPlatform;
+function generateEndingPlatform() {
+	endingPlatform = new Path.Rectangle({
+		point: [10, -30],
+		size: [view.size.width - 20, 30],
+	});
+	endingPlatform.fillColor = {
+		gradient: {
+			stops: ['white', 'black']
+		},
+		origin: endingPlatform.position - new Point(0, -15),
+		destination: endingPlatform.position - new Point(0, 15)
+	}
+}
+
+function checkEndingPlatformCollision() {
+	if(player.position.y < endingPlatform.position.y - endingPlatform.bounds.height/2 + 5 &&
+	player.position.y > endingPlatform.position.y - endingPlatform.bounds.height/2 - 5 && speedVector.y > 0) {
+		if(Math.sqrt(Math.pow(speedVector.x, 2) + Math.pow(speedVector.y, 2)) < 2.5) {
+			speedVector = new Point(0, 0);
+			jumpsMidAir = 0;
+			if(speedArrow) {
+				speedArrow.strokeColor = 'violet';
+			}
+			beginGameWonAnimation();
+		}
+		speedVector.y = -speedVector.y / 2;
+		
+		if(speedVector.x > 0) {
+			speedVector += friction;
+		} 
+		if(speedVector.x < 0) {
+			speedVector -= friction;
+		}
+		player.position.y = endingPlatform.position.y - endingPlatform.bounds.height / 2 - 5;
+	}
+}
+
 var heightNow = 0;
 while(heightNow < view.size.height){ 
 	generateStartingPlatform(heightNow);
@@ -143,6 +187,7 @@ var jumpsMidAir = 0;
 var jumpsLimit = 5;
 var starCount = 0;
 var maxStars = 0;
+var endHeight = 10000;
 
 function onFrame(event) {
 	if(stop) {
@@ -150,6 +195,8 @@ function onFrame(event) {
 	}
 	if(gameOver) {
 		gameOverAnimation();
+	} else if (gameWon) {
+		gameWonAnimation();
 	} else {
 		scrollingHeight = view.size.height / 4;
 		speedVector -= gravity;
@@ -161,8 +208,11 @@ function onFrame(event) {
 				platform.position -= descendVector;
 			});
 			currentHeight -= descendVector.y;
-			if(star){
+			if(star) {
 				star.position -= descendVector;
+			}
+			if(endingPlatform) {
+				endingPlatform.position -= descendVector;
 			}
 		}
 		
@@ -175,14 +225,19 @@ function onFrame(event) {
 			player.position.x = view.size.width - 15;
 		}
 		if(player.position.y < scrollingHeight && speedVector.y < 0) {
-			platforms.forEach( function(platform) {
-				platform.position.y -= player.position.y - scrollingHeight;
-			});
-			if(star) {
-				star.position.y -= player.position.y - scrollingHeight;
+			if(!(endingPlatform && endingPlatform.position.y > view.center.y)) {
+				platforms.forEach( function(platform) {
+					platform.position.y -= player.position.y - scrollingHeight;
+				});
+				if(star) {
+					star.position.y -= player.position.y - scrollingHeight;
+				}
+				if(endingPlatform) {
+					endingPlatform.position.y -= player.position.y - scrollingHeight;
+				}
+				currentHeight -= player.position.y - scrollingHeight;
+				player.position.y -= player.position.y - scrollingHeight;
 			}
-			currentHeight -= player.position.y - scrollingHeight;
-			player.position.y -= player.position.y - scrollingHeight;
 		}
 		if(player.position.y > view.size.height + 15 && speedVector.y > 0) {
 			if(!gameOver) {
@@ -190,15 +245,19 @@ function onFrame(event) {
 			}
 		}
 		
-		if(currentHeight > 0 && currentHeight - generatedAt > 200) {
-			descending = true;
-			generatedAt = currentHeight;
-			generatePlatform();
-		}
-		
-		if(currentHeight > 0 && currentHeight - starGeneratedAt > 2 * view.size.height) {
-			starGeneratedAt = currentHeight;
-			generateStar();
+		if(currentHeight > endHeight && !endingPlatform) {
+			generateEndingPlatform();
+		} else if (!endingPlatform) {
+			if(currentHeight > 0 && currentHeight - generatedAt > 200) {
+				descending = true;
+				generatedAt = currentHeight;
+				generatePlatform();
+			}
+			
+			if(currentHeight > 0 && currentHeight - starGeneratedAt > 2 * view.size.height) {
+				starGeneratedAt = currentHeight;
+				generateStar();
+			}
 		}
 		
 		platforms = platforms.slice(-15);
@@ -206,6 +265,9 @@ function onFrame(event) {
 		platforms.forEach( function(platform) {
 			checkCollision(platform);
 		});
+		
+		if(endingPlatform)
+			checkEndingPlatformCollision();
 		
 		if(star) {
 			if(player.position.getDistance(star.position) < 25) {
@@ -254,6 +316,51 @@ function gameOverAnimation() {
 			content: 'Collected stars: ' + starCount + '/' + maxStars + ' (' + Math.round(starCount * 100 / maxStars) + '%)'
 		});
 		gameOverText.insertAbove(gameOverBlock);
+		stop = true;
+	}
+}
+
+function gameWonAnimation() {
+	endingPlatform.position -= descendVector;
+	player.position -= descendVector;
+	platforms.forEach(function(platform) {
+		platform.position -= descendVector;
+	});
+	if(endingPlatform.position.y > view.size.height - 20) {
+		descendVector = new Point(0, 0);
+		var gameOverText = new PointText({
+			point: view.center + new Point(0, -150),
+			justification: 'center',
+			fontSize: 30,
+			fillColor: 'black',
+			content: 'Congratulations!'
+		});
+		gameOverText.insertAbove(gameOverBlock);
+		
+		var gameOverText = new PointText({
+			point: view.center + new Point(0, -50),
+			justification: 'center',
+			fontSize: 20,
+			fillColor: 'black',
+			content: 'You saved the world!'
+		});
+		gameOverText.insertAbove(gameOverBlock);
+		
+		var scoreText = new PointText({
+			point: view.center + new Point(0, 50),
+			justification: 'center',
+			fontSize: 20,
+			fillColor: 'black',
+			content: 'Your score: ' + Math.round(currentHeight)
+		});
+		
+		var starText = new PointText({
+			point: view.center + new Point(0, 150),
+			justification: 'center',
+			fontSize: 20,
+			fillColor: 'black',
+			content: 'Collected stars: ' + starCount + '/' + maxStars + ' (' + Math.round(starCount * 100 / maxStars) + '%)'
+		});
 		stop = true;
 	}
 }
