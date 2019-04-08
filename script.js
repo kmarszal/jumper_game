@@ -1,5 +1,6 @@
 var currentHeight = 0;
 var generatedAt = 0;
+var starGeneratedAt = 0;
 var gameOver = false;
 var gameOverBlock;
 var stop = false;
@@ -75,6 +76,13 @@ function beginGameOverAnimation() {
 	});
 }
 
+var star;
+function generateStar() {
+	star = new Path.Star(new Point(getRndInteger(20, view.size.width - 20), -20), 5, 40, 10);
+	star.fillColor = 'yellow';
+	++maxStars;
+}
+
 var leftBorder = new Path.Rectangle({
 	point: [0, 0],
 	size: [10, view.size.height],
@@ -133,43 +141,15 @@ while(heightNow < view.size.height){
 var descending = false;
 var jumpsMidAir = 0;
 var jumpsLimit = 5;
+var starCount = 0;
+var maxStars = 0;
 
 function onFrame(event) {
 	if(stop) {
 		return;
 	}
 	if(gameOver) {
-		gameOverBlock.position -= descendVector;
-		if(gameOverBlock.position.y > view.center.y) {
-			descendVector = new Point(0, 0);
-			var gameOverText = new PointText({
-				point: view.center + new Point(0, -100),
-				justification: 'center',
-				fontSize: 30,
-				fillColor: 'white',
-				content: 'Game Over'
-			});
-			gameOverText.insertAbove(gameOverBlock);
-			
-			var gameOverText = new PointText({
-				point: view.center,
-				justification: 'center',
-				fontSize: 20,
-				fillColor: 'white',
-				content: 'You suck'
-			});
-			gameOverText.insertAbove(gameOverBlock);
-			
-			var scoreText = new PointText({
-				point: view.center + new Point(0, 100),
-				justification: 'center',
-				fontSize: 20,
-				fillColor: 'white',
-				content: 'Your score: ' + Math.round(currentHeight)
-			});
-			gameOverText.insertAbove(gameOverBlock);
-			stop = true;
-		}			
+		gameOverAnimation();
 	} else {
 		scrollingHeight = view.size.height / 4;
 		speedVector -= gravity;
@@ -181,6 +161,9 @@ function onFrame(event) {
 				platform.position -= descendVector;
 			});
 			currentHeight -= descendVector.y;
+			if(star){
+				star.position -= descendVector;
+			}
 		}
 		
 		if(player.position.x < 15 && speedVector.x < 0) {
@@ -195,6 +178,9 @@ function onFrame(event) {
 			platforms.forEach( function(platform) {
 				platform.position.y -= player.position.y - scrollingHeight;
 			});
+			if(star) {
+				star.position.y -= player.position.y - scrollingHeight;
+			}
 			currentHeight -= player.position.y - scrollingHeight;
 			player.position.y -= player.position.y - scrollingHeight;
 		}
@@ -210,11 +196,65 @@ function onFrame(event) {
 			generatePlatform();
 		}
 		
+		if(currentHeight > 0 && currentHeight - starGeneratedAt > 2 * view.size.height) {
+			starGeneratedAt = currentHeight;
+			generateStar();
+		}
+		
 		platforms = platforms.slice(-15);
 		
 		platforms.forEach( function(platform) {
 			checkCollision(platform);
 		});
+		
+		if(star) {
+			if(player.position.getDistance(star.position) < 25) {
+				star.clear();
+				++starCount;
+			}
+		}
+	}
+}
+
+function gameOverAnimation() {
+	gameOverBlock.position -= descendVector;
+	if(gameOverBlock.position.y > view.center.y) {
+		descendVector = new Point(0, 0);
+		var gameOverText = new PointText({
+			point: view.center + new Point(0, -150),
+			justification: 'center',
+			fontSize: 30,
+			fillColor: 'white',
+			content: 'Game Over'
+		});
+		gameOverText.insertAbove(gameOverBlock);
+		
+		var gameOverText = new PointText({
+			point: view.center + new Point(0, -50),
+			justification: 'center',
+			fontSize: 20,
+			fillColor: 'white',
+			content: 'You suck'
+		});
+		gameOverText.insertAbove(gameOverBlock);
+		
+		var scoreText = new PointText({
+			point: view.center + new Point(0, 50),
+			justification: 'center',
+			fontSize: 20,
+			fillColor: 'white',
+			content: 'Your score: ' + Math.round(currentHeight)
+		});
+		
+		var starText = new PointText({
+			point: view.center + new Point(0, 150),
+			justification: 'center',
+			fontSize: 20,
+			fillColor: 'white',
+			content: 'Collected stars: ' + starCount + '/' + maxStars + ' (' + Math.round(starCount * 100 / maxStars) + '%)'
+		});
+		gameOverText.insertAbove(gameOverBlock);
+		stop = true;
 	}
 }
 
