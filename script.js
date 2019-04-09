@@ -84,7 +84,6 @@ var star;
 function generateStar() {
 	star = new Path.Star(new Point(getRndInteger(20, view.size.width - 20), -20), 5, 40, 10);
 	star.fillColor = 'yellow';
-	++maxStars;
 }
 
 var leftBorder = new Path.Rectangle({
@@ -184,7 +183,7 @@ var descending = false;
 var jumpsMidAir = 0;
 var jumpsLimit = 5;
 var starCount = 0;
-var maxStars = 0;
+var maxStars = 10;
 var endHeight = 10000;
 
 function onFrame(event) {
@@ -300,12 +299,12 @@ function gameOverAnimation() {
 		});
 		gameOverText.insertAbove(gameOverBlock);
 		
-		var scoreText = new PointText({
+		var heightText = new PointText({
 			point: view.center + new Point(0, 50),
 			justification: 'center',
 			fontSize: 20,
 			fillColor: 'white',
-			content: 'Your score: ' + Math.round(currentHeight)
+			content: 'Height reached: ' + Math.round(currentHeight)
 		});
 		
 		var starText = new PointText({
@@ -315,6 +314,18 @@ function gameOverAnimation() {
 			fillColor: 'white',
 			content: 'Collected stars: ' + starCount + '/' + maxStars + ' (' + Math.round(starCount * 100 / maxStars) + '%)'
 		});
+		
+		var heightScore = Math.round(currentHeight / endHeight * 40) / 100;
+		var starScore = Math.round(starCount / maxStars * 50) / 100;
+		
+		var scoreText = new PointText({
+			point: view.center + new Point(0, 250),
+			justification: 'center',
+			fontSize: 20,
+			fillColor: 'white',
+			content: 'Your score: ' + heightScore + ' (height) + ' + starScore + ' (stars) = ' + Math.round((heightScore + starScore) * 100) / 100 + ' out of 1.0'
+		});
+		
 		gameOverText.insertAbove(gameOverBlock);
 		stop = true;
 	}
@@ -346,12 +357,12 @@ function gameWonAnimation() {
 		});
 		gameOverText.insertAbove(gameOverBlock);
 		
-		var scoreText = new PointText({
+		var heightText = new PointText({
 			point: view.center + new Point(0, 50),
 			justification: 'center',
 			fontSize: 20,
 			fillColor: 'black',
-			content: 'Your score: ' + Math.round(currentHeight)
+			content: 'Height reached: ' + Math.round(currentHeight)
 		});
 		
 		var starText = new PointText({
@@ -361,6 +372,19 @@ function gameWonAnimation() {
 			fillColor: 'black',
 			content: 'Collected stars: ' + starCount + '/' + maxStars + ' (' + Math.round(starCount * 100 / maxStars) + '%)'
 		});
+		
+		var topScore = 0.1;
+		var heightScore = 0.4;
+		var starScore = Math.round(starCount / maxStars * 50) / 100;
+		
+		var scoreText = new PointText({
+			point: view.center + new Point(0, 250),
+			justification: 'center',
+			fontSize: 20,
+			fillColor: 'black',
+			content: 'Your score: ' + heightScore + ' (height) + ' + starScore + ' (stars) + ' + topScore + ' (reaching the top) = ' + Math.round((heightScore + starScore + topScore) * 100) / 100 + ' out of 1.0'
+		});
+		
 		stop = true;
 	}
 }
