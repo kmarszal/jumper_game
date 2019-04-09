@@ -5,6 +5,7 @@ var gameOver = false;
 var gameWon = false;
 var gameOverBlock;
 var stop = false;
+var lastPosition = new Point(view.size.width / 2, view.size.height - 10);
 
 function getRndInteger(min, max) {
   return Math.floor(Math.random() * (max - min + 1) ) + min;
@@ -12,8 +13,8 @@ function getRndInteger(min, max) {
 
 function checkCollision(platform) {
 	//left wall
-	if(player.position.x < platform.position.x - platform.bounds.width/2 + 10 &&
-	player.position.x > platform.position.x - platform.bounds.width/2 && 
+	if(player.position.x > platform.position.x - platform.bounds.width/2 &&
+	lastPosition.x < platform.position.x - platform.bounds.width/2 && 
 	player.position.y > platform.position.y - platform.bounds.height/2 - 5 && 
 	player.position.y < platform.position.y + platform.bounds.height/2 && 
 	speedVector.x > 0) {
@@ -22,8 +23,8 @@ function checkCollision(platform) {
 		player.position.x = platform.position.x - platform.bounds.width/2;
 	}
 	//right wall
-	if(player.position.x > platform.position.x + platform.bounds.width/2 - 10 &&
-	player.position.x < platform.position.x + platform.bounds.width/2 &&
+	if(player.position.x < platform.position.x + platform.bounds.width/2 &&
+	lastPosition.x > platform.position.x + platform.bounds.width/2 &&
 	player.position.y > platform.position.y - platform.bounds.height/2 - 5 && 
 	player.position.y < platform.position.y + platform.bounds.height/2 && 
 	speedVector.x < 0) {
@@ -32,21 +33,18 @@ function checkCollision(platform) {
 		player.position.x = platform.position.x + platform.bounds.width/2;
 	}
 	//ceiling
-	if(player.position.y < platform.position.y + platform.bounds.height/2 &&
-	player.position.y > platform.position.y + platform.bounds.height/2 - 10 && 
+	if(lastPosition.y > platform.position.y + platform.bounds.height/2 &&
+	player.position.y < platform.position.y + platform.bounds.height/2 && 
 	player.position.x < platform.position.x + platform.bounds.width/2 && 
-	player.position.x > platform.position.x - platform.bounds.width/2 &&
-	speedVector.y < 0) {
-	
+	player.position.x > platform.position.x - platform.bounds.width/2) {
 		speedVector.y = -speedVector.y / 2;
 		player.position.y = platform.position.y + platform.bounds.height/2;
 	}
 	//floor
-	if(player.position.y < platform.position.y - platform.bounds.height/2 + 5 &&
-	player.position.y > platform.position.y - platform.bounds.height/2 - 5 &&
+	if(lastPosition.y < platform.position.y - platform.bounds.height/2 &&
+	player.position.y > platform.position.y - platform.bounds.height/2 - 5 && 
 	player.position.x < platform.position.x + platform.bounds.width/2 && 
-	player.position.x > platform.position.x - platform.bounds.width/2 && 
-	speedVector.y > 0) {
+	player.position.x > platform.position.x - platform.bounds.width/2) {
 		
 		if(Math.sqrt(Math.pow(speedVector.x, 2) + Math.pow(speedVector.y, 2)) < 2.5) {
 			speedVector = new Point(0, 0);
@@ -236,6 +234,7 @@ function onFrame(event) {
 					endingPlatform.position.y -= player.position.y - scrollingHeight;
 				}
 				currentHeight -= player.position.y - scrollingHeight;
+				lastPosition.y -= player.position.y - scrollingHeight;
 				player.position.y -= player.position.y - scrollingHeight;
 			}
 		}
@@ -275,6 +274,7 @@ function onFrame(event) {
 				++starCount;
 			}
 		}
+		lastPosition = new Point(player.position);
 	}
 }
 
@@ -402,6 +402,11 @@ function onMouseDown(event) {
 function onMouseDrag(event) {
 	speedArrow.removeSegment(1);
 	speedArrow.add(event.point);
+	var vector = speedArrow.lastSegment.point - speedArrow.firstSegment.point;
+	if(vector.length > 200) {
+		speedArrow.removeSegment(1);
+		speedArrow.add(speedArrow.firstSegment.point + vector.normalize(200));
+	}
 }
 
 function onMouseUp(event) {
@@ -410,7 +415,7 @@ function onMouseUp(event) {
 		speedVector /= 10;
 	} else if (jumpsMidAir++ < jumpsLimit) {
 		speedVector += (speedArrow.lastSegment.point - speedArrow.firstSegment.point);
-		speedVector /= (jumpsMidAir + 1) * 10;
+		speedVector /= (jumpsMidAir + 3) * 5;
 	}
 	speedArrow.remove();
 }
