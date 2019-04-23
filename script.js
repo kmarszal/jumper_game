@@ -188,6 +188,15 @@ var starCount = 0;
 var maxStars = 5;
 var endHeight = 10000;
 
+var instructionText = new PointText({
+	point: view.center + new Point(0, -100),
+	justification: 'center',
+	fontSize: 20,
+	fillColor: 'black',
+	content: 'Przeciągnij i upuść gdziekolwiek, aby skoczyć.\n\nMożesz skakać w powietrzu, ale tylko kilka razy i każdy następny skok jest słabszy.\n\nSkoki odnawiają się po zatrzymaniu się na platformie.\n\nTwój wynik zależy od osiągniętej wysokości i liczby zebranych gwiazdek.\n\nJeżeli grasz na telefonie, polecam obrócić ekran\n\nPowodzenia!',
+	opacity: 0.75
+});
+
 function onFrame(event) {
 	if(stop) {
 		return;
@@ -213,6 +222,7 @@ function onFrame(event) {
 			if(endingPlatform) {
 				endingPlatform.position -= descendVector;
 			}
+			instructionText.position -= descendVector;
 		}
 		
 		if(player.position.x < 15 && speedVector.x < 0) {
@@ -234,6 +244,7 @@ function onFrame(event) {
 				if(endingPlatform) {
 					endingPlatform.position.y -= player.position.y - scrollingHeight;
 				}
+				instructionText.position.y -= player.position.y - scrollingHeight;
 				currentHeight -= player.position.y - scrollingHeight;
 				lastPosition.y -= player.position.y - scrollingHeight;
 				player.position.y -= player.position.y - scrollingHeight;
@@ -288,7 +299,7 @@ function gameOverAnimation() {
 			justification: 'center',
 			fontSize: 30,
 			fillColor: 'white',
-			content: 'Game Over'
+			content: 'Koniec Gry'
 		});
 		gameOverText.insertAbove(gameOverBlock);
 		
@@ -297,7 +308,7 @@ function gameOverAnimation() {
 			justification: 'center',
 			fontSize: 20,
 			fillColor: 'white',
-			content: 'You suck'
+			content: 'Twój marny żywot dobiegł końca'
 		});
 		gameOverText.insertAbove(gameOverBlock);
 		
@@ -306,7 +317,7 @@ function gameOverAnimation() {
 			justification: 'center',
 			fontSize: 20,
 			fillColor: 'white',
-			content: 'Height reached: ' + Math.round(currentHeight)
+			content: 'Osiągnięta wysokość: ' + Math.round(currentHeight)
 		});
 		
 		var starText = new PointText({
@@ -314,7 +325,7 @@ function gameOverAnimation() {
 			justification: 'center',
 			fontSize: 20,
 			fillColor: 'white',
-			content: 'Collected stars: ' + starCount + '/' + maxStars + ' (' + Math.round(starCount * 100 / maxStars) + '%)'
+			content: 'Zebrane gwiazdki: ' + starCount + '/' + maxStars + ' (' + Math.round(starCount * 100 / maxStars) + '%)'
 		});
 		
 		var heightScore = Math.round(currentHeight / endHeight * 40) / 100;
@@ -325,7 +336,7 @@ function gameOverAnimation() {
 			justification: 'center',
 			fontSize: 20,
 			fillColor: 'white',
-			content: 'Your score: ' + heightScore + ' (height) + ' + starScore + ' (stars) = ' + Math.round((heightScore + starScore) * 100) / 100 + ' out of 1.0'
+			content: 'Twój wynik: ' + heightScore + ' (za wysokość) + ' + starScore + ' (za gwiazdki) = ' + Math.round((heightScore + starScore) * 100) / 100 + ' / 1.0'
 		});
 		
 		gameOverText.insertAbove(gameOverBlock);
@@ -346,7 +357,7 @@ function gameWonAnimation() {
 			justification: 'center',
 			fontSize: 30,
 			fillColor: 'black',
-			content: 'Congratulations!'
+			content: 'Gratulacje!'
 		});
 		gameOverText.insertAbove(gameOverBlock);
 		
@@ -355,24 +366,16 @@ function gameWonAnimation() {
 			justification: 'center',
 			fontSize: 20,
 			fillColor: 'black',
-			content: 'You saved the world!'
+			content: 'Udało Ci się dotrzeć na szczyt!'
 		});
 		gameOverText.insertAbove(gameOverBlock);
 		
-		var heightText = new PointText({
+		var starText = new PointText({
 			point: view.center + new Point(0, 50),
 			justification: 'center',
 			fontSize: 20,
 			fillColor: 'black',
-			content: 'Height reached: ' + Math.round(currentHeight)
-		});
-		
-		var starText = new PointText({
-			point: view.center + new Point(0, 150),
-			justification: 'center',
-			fontSize: 20,
-			fillColor: 'black',
-			content: 'Collected stars: ' + starCount + '/' + maxStars + ' (' + Math.round(starCount * 100 / maxStars) + '%)'
+			content: 'Zebrane gwiazdki: ' + starCount + '/' + maxStars + ' (' + Math.round(starCount * 100 / maxStars) + '%)'
 		});
 		
 		var topScore = 0.1;
@@ -380,11 +383,11 @@ function gameWonAnimation() {
 		var starScore = Math.round(starCount / maxStars * 50) / 100;
 		
 		var scoreText = new PointText({
-			point: view.center + new Point(0, 250),
+			point: view.center + new Point(0, 150),
 			justification: 'center',
 			fontSize: 20,
 			fillColor: 'black',
-			content: 'Your score: ' + heightScore + ' (height) + ' + starScore + ' (stars) + ' + topScore + ' (reaching the top) = ' + Math.round((heightScore + starScore + topScore) * 100) / 100 + ' out of 1.0'
+			content: 'Twój wynik: ' + heightScore + ' (za wysokość) + ' + starScore + ' (za gwiazdki) + ' + topScore + ' (za ukończenie gry) = ' + Math.round((heightScore + starScore + topScore) * 100) / 100 + ' / 1.0'
 		});
 		
 		stop = true;
