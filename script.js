@@ -107,6 +107,8 @@ player.fillColor = 'black';
 
 var speedVector = new Point(0, 0);
 var speedArrow;
+var speedArrowLines = new Array(2);
+var speedLimitArrow;
 var gravity = new Point(0, -0.1);
 var friction = new Point(-0.1, 0);
 
@@ -183,7 +185,7 @@ var descending = false;
 var jumpsMidAir = 0;
 var jumpsLimit = 5;
 var starCount = 0;
-var maxStars = 10;
+var maxStars = 5;
 var endHeight = 10000;
 
 function onFrame(event) {
@@ -390,6 +392,10 @@ function gameWonAnimation() {
 }
 
 function onMouseDown(event) {
+	speedLimitArrow = new Path();
+	speedLimitArrow.strokeWidth = 2;
+	speedLimitArrow.strokeColor = 'gray';
+	speedLimitArrow.opacity = 0.25;
 	speedArrow = new Path();
 	speedArrow.strokeWidth = 3;
 	if (speedVector.x == 0 && speedVector.y == 0) {
@@ -421,16 +427,39 @@ function onMouseDown(event) {
 		}
 	}
 	speedArrow.add(event.point);
+	speedLimitArrow.add(event.point);
 }
 
 function onMouseDrag(event) {
+	speedLimitArrow.removeSegment(1);
+	var vector = event.point - speedArrow.firstSegment.point;
+	speedLimitArrow.add(speedLimitArrow.firstSegment.point + vector.normalize(200));
+	
 	speedArrow.removeSegment(1);
-	speedArrow.add(event.point);
-	var vector = speedArrow.lastSegment.point - speedArrow.firstSegment.point;
 	if(vector.length > 200) {
-		speedArrow.removeSegment(1);
 		speedArrow.add(speedArrow.firstSegment.point + vector.normalize(200));
+	} else {
+		speedArrow.add(event.point);
 	}
+	
+	speedArrowLines.forEach(function(line) {
+		line.remove();
+	});
+	speedArrowLines = new Array(2);
+	
+	speedArrowLines.push(drawSpeedArrowLine(speedArrow, 30))
+	speedArrowLines.push(drawSpeedArrowLine(speedArrow, -30))
+}
+
+function drawSpeedArrowLine(arrow, angle) {
+	var speedArrowLine = new Path();
+	speedArrowLine.strokeWidth = arrow.strokeWidth;
+	speedArrowLine.strokeColor = arrow.strokeColor;
+	speedArrowLine.add(arrow.lastSegment.point);
+	var vector = arrow.firstSegment.point - arrow.lastSegment.point;
+	vector.angle -= angle;
+	speedArrowLine.add(arrow.lastSegment.point + vector.normalize(speedArrow.length / 10));
+	return speedArrowLine;
 }
 
 function onMouseUp(event) {
@@ -442,6 +471,12 @@ function onMouseUp(event) {
 		speedVector /= (jumpsMidAir + 3) * 5;
 	}
 	speedArrow.remove();
+	speedLimitArrow.remove();
+	
+	speedArrowLines.forEach(function(line) {
+		line.remove();
+	});
+	speedArrowLines = new Array(2);
 }
 
 function onResize() {
