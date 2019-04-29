@@ -6,43 +6,45 @@ var gameWon = false;
 var gameOverBlock;
 var stop = false;
 var lastPosition = new Point(view.size.width / 2, view.size.height - 10);
+var faceDirection = 'right';
 
 function getRndInteger(min, max) {
   return Math.floor(Math.random() * (max - min + 1) ) + min;
 }
-
 function checkCollision(platform) {
 	//left wall
-	if(player.position.x > platform.position.x - platform.bounds.width/2 &&
-	lastPosition.x < platform.position.x - platform.bounds.width/2 && 
+	if(player.position.x > platform.position.x - platform.bounds.width/2 - 5 &&
+	lastPosition.x < platform.position.x - platform.bounds.width/2 - 5 && 
 	player.position.y > platform.position.y - platform.bounds.height/2 - 5 && 
 	player.position.y < platform.position.y + platform.bounds.height/2 && 
 	speedVector.x > 0) {
-		
+		faceDirection = 'left';
+		player.scale(-1, 1);
 		speedVector.x = -speedVector.x / 2;
-		player.position.x = platform.position.x - platform.bounds.width/2;
+		player.position.x = platform.position.x - platform.bounds.width/2 - 5;
 	}
 	//right wall
-	if(player.position.x < platform.position.x + platform.bounds.width/2 &&
-	lastPosition.x > platform.position.x + platform.bounds.width/2 &&
+	else if(player.position.x < platform.position.x + platform.bounds.width/2 + 5 &&
+	lastPosition.x > platform.position.x + platform.bounds.width/2 + 5 &&
 	player.position.y > platform.position.y - platform.bounds.height/2 - 5 && 
 	player.position.y < platform.position.y + platform.bounds.height/2 && 
 	speedVector.x < 0) {
-	
+		faceDirection = 'right';
+		player.scale(-1, 1);
 		speedVector.x = -speedVector.x / 2;
-		player.position.x = platform.position.x + platform.bounds.width/2;
+		player.position.x = platform.position.x + platform.bounds.width/2 + 5;
 	}
 	//ceiling
-	if(lastPosition.y > platform.position.y + platform.bounds.height/2 &&
-	player.position.y < platform.position.y + platform.bounds.height/2 && 
+	else if(lastPosition.y + 2 > platform.position.y + platform.bounds.height/2 &&
+	player.position.y - 2 < platform.position.y + platform.bounds.height/2 && 
 	player.position.x < platform.position.x + platform.bounds.width/2 && 
 	player.position.x > platform.position.x - platform.bounds.width/2) {
 		speedVector.y = -speedVector.y / 2;
-		player.position.y = platform.position.y + platform.bounds.height/2;
+		player.position.y = platform.position.y + platform.bounds.height/2 + 7;
 	}
 	//floor
-	if(lastPosition.y < platform.position.y - platform.bounds.height/2 &&
-	player.position.y > platform.position.y - platform.bounds.height/2 - 5 && 
+	else if(lastPosition.y - 2 < platform.position.y - platform.bounds.height/2 &&
+	player.position.y + 7 > platform.position.y - platform.bounds.height/2 - 5 && 
 	player.position.x < platform.position.x + platform.bounds.width/2 && 
 	player.position.x > platform.position.x - platform.bounds.width/2) {
 		
@@ -61,7 +63,7 @@ function checkCollision(platform) {
 		if(speedVector.x < 0) {
 			speedVector -= friction;
 		}
-		player.position.y = platform.position.y - platform.bounds.height / 2 - 5;
+		player.position.y = platform.position.y - platform.bounds.height / 2 - 12;
 	}
 }
 
@@ -98,12 +100,15 @@ var rightBorder = new Path.Rectangle({
 	fillColor: 'black'
 });
 
-var player = new Path();
+/*var player = new Path();
 player.add(new Point(view.size.width / 2, view.size.height - 20));
 player.add(new Point(view.size.width / 2 + 5, view.size.height - 10));
 player.add(new Point(view.size.width / 2 - 5, view.size.height - 10));
 player.closed = true;
-player.fillColor = 'black';
+player.fillColor = 'black';*/
+
+var player = new Raster('rabbit');
+player.position = new Point(view.size.width/2, view.size.height - 12);
 
 var speedVector = new Point(0, 0);
 var speedArrow;
@@ -225,13 +230,17 @@ function onFrame(event) {
 			instructionText.position -= descendVector;
 		}
 		
-		if(player.position.x < 15 && speedVector.x < 0) {
+		if(player.position.x < 22 && speedVector.x < 0) {				
+			faceDirection = 'right';
+			player.scale(-1, 1);
 			speedVector.x = -speedVector.x / 2;
-			player.position.x = 15;
+			player.position.x = 22;
 		}
-		if(player.position.x > view.size.width - 15 && speedVector.x > 0) {
+		if(player.position.x > view.size.width - 22 && speedVector.x > 0) {
+			faceDirection = 'left';
+			player.scale(-1, 1);
 			speedVector.x = -speedVector.x / 2;
-			player.position.x = view.size.width - 15;
+			player.position.x = view.size.width - 22;
 		}
 		if(player.position.y < scrollingHeight && speedVector.y < 0) {
 			if(!(endingPlatform && endingPlatform.position.y > view.center.y)) {
@@ -480,6 +489,18 @@ function onMouseUp(event) {
 		line.remove();
 	});
 	speedArrowLines = new Array(2);
+	
+	if(speedVector.x > 0) {
+		if(faceDirection == 'left') {
+			faceDirection = 'right';
+			player.scale(-1, 1);
+		}
+	} else if (speedVector.x < 0) {
+		if(faceDirection == 'right') {
+			faceDirection = 'left';
+			player.scale(-1, 1);
+		}
+	}
 }
 
 function onResize() {
