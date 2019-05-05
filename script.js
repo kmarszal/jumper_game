@@ -1,13 +1,3 @@
-var currentHeight = 0;
-var generatedAt = 0;
-var starGeneratedAt = 0;
-var gameOver = false;
-var gameWon = false;
-var gameOverBlock;
-var stop = false;
-var lastPosition = new Point(view.size.width / 2, view.size.height - 10);
-var faceDirection = 'right';
-
 function getRndInteger(min, max) {
   return Math.floor(Math.random() * (max - min + 1) ) + min;
 }
@@ -82,10 +72,10 @@ function beginGameWonAnimation() {
 	gameWon = true;
 }
 
-var star;
 function generateStar() {
-	star = new Path.Star(new Point(getRndInteger(20, view.size.width - 20), -20), 5, 40, 10);
-	star.fillColor = 'yellow';
+	star = new Path.Star(new Point(getRndInteger(20, view.size.width - 20), -20), 5, 40, 15);
+	star.fillColor = 'green';
+	star.opacity = 0.75;
 }
 
 var leftBorder = new Path.Rectangle({
@@ -100,26 +90,95 @@ var rightBorder = new Path.Rectangle({
 	fillColor: 'black'
 });
 
-/*var player = new Path();
-player.add(new Point(view.size.width / 2, view.size.height - 20));
-player.add(new Point(view.size.width / 2 + 5, view.size.height - 10));
-player.add(new Point(view.size.width / 2 - 5, view.size.height - 10));
-player.closed = true;
-player.fillColor = 'black';*/
+var currentHeight;
+var generatedAt;
+var starGeneratedAt;
+var gameOver;
+var gameWon;
+var gameOverBlock;
+var stop;
+var lastPosition;
+var faceDirection;
+var star;
+var player;
 
-var player = new Raster('rabbit');
-player.position = new Point(view.size.width/2, view.size.height - 12);
-
-var speedVector = new Point(0, 0);
+var speedVector;
 var speedArrow;
-var speedArrowLines = new Array(2);
+var speedArrowLines;
 var speedLimitArrow;
-var gravity = new Point(0, -0.1);
-var friction = new Point(-0.1, 0);
+var gravity;
+var friction;
 
-var descendVector = new Point(0, -0.5);
+var descendVector;
 
-var platforms = new Array();
+var platforms;
+var endingPlatform;
+
+var descending;
+var jumpsMidAir;
+var jumpsLimit;
+var starCount;
+var maxStars;
+var endHeight;
+
+var instructionText;
+
+function reset() {
+	leftBorder.clear();
+	rightBorder.clear();
+	leftBorder = new Path.Rectangle({
+		point: [0, 0],
+		size: [10, view.size.height],
+		fillColor: 'black'
+	});
+
+	rightBorder = new Path.Rectangle({
+		point: [view.size.width - 10, 0],
+		size: [10, view.size.height],
+		fillColor: 'black'
+	});
+
+	currentHeight = 0;
+	generatedAt = 0;
+	starGeneratedAt = 0;
+	gameOver = false;
+	gameWon = false;
+	stop = false;
+	lastPosition = new Point(view.size.width / 2, view.size.height - 10);
+	faceDirection = 'right';
+	if(player)
+		player.remove();
+	player = new Raster('rabbit');
+	player.position = new Point(view.size.width/2, view.size.height - 12);
+
+	speedVector = new Point(0, 0);
+	speedArrowLines = new Array(2);
+	gravity = new Point(0, -0.1);
+	friction = new Point(-0.1, 0);
+
+	descendVector = new Point(0, -0.5);
+
+	initPlatforms();
+
+	descending = false;
+	jumpsMidAir = 0;
+	jumpsLimit = 5;
+	starCount = 0;
+	maxStars = 5;
+	endHeight = 10000;
+
+	if(instructionText)
+		instructionText.remove();
+	instructionText = new PointText({
+		point: view.center + new Point(0, -100),
+		justification: 'center',
+		fontSize: 20,
+		fillColor: 'green',
+		content: 'Przeciągnij i upuść gdziekolwiek, aby skoczyć.\n\nMożesz skakać w powietrzu, ale tylko kilka razy i każdy następny skok jest słabszy.\n\nSkoki odnawiają się po zatrzymaniu się na platformie.\n\nTwój wynik zależy od osiągniętej wysokości i liczby zebranych gwiazdek.\n\nJeżeli grasz na telefonie, polecam obrócić ekran\n\nPowodzenia!',
+		opacity: 0.75
+	});
+}
+
 function generatePlatform() {
 	platforms.push(new Path.Rectangle({
 		point: [getRndInteger(0, view.size.width), -20],
@@ -131,18 +190,12 @@ function generatePlatform() {
 function generateStartingPlatform(height) {
 	//starting platform
 	platforms.push(new Path.Rectangle({
-		point: [0, view.size.height - 10],
-		size: [view.size.width, 10],
-		fillColor: 'black'
-	}));
-	platforms.push(new Path.Rectangle({
 		point: [getRndInteger(0, view.size.width), height - 20],
 		size: [getRndInteger(view.size.width/20, view.size.width/3), getRndInteger(5, 20)],
 		fillColor: 'black'
 	}));
 }
 
-var endingPlatform;
 function generateEndingPlatform() {
 	endingPlatform = new Path.Rectangle({
 		point: [10, -30],
@@ -180,27 +233,24 @@ function checkEndingPlatformCollision() {
 	}
 }
 
-var heightNow = 0;
-while(heightNow < view.size.height){ 
-	generateStartingPlatform(heightNow);
-	heightNow += 200;
+function initPlatforms() {
+	if(platforms) {
+		platforms.forEach(function(platform) {
+			platform.clear();
+		});
+	}
+	platforms = new Array();
+	var heightNow = 0;
+	platforms.push(new Path.Rectangle({
+		point: [0, view.size.height - 10],
+		size: [view.size.width, 10],
+		fillColor: 'black'
+	}));
+	while(heightNow < view.size.height){ 
+		generateStartingPlatform(heightNow);
+		heightNow += 200;
+	}
 }
-
-var descending = false;
-var jumpsMidAir = 0;
-var jumpsLimit = 5;
-var starCount = 0;
-var maxStars = 5;
-var endHeight = 10000;
-
-var instructionText = new PointText({
-	point: view.center + new Point(0, -100),
-	justification: 'center',
-	fontSize: 20,
-	fillColor: 'black',
-	content: 'Przeciągnij i upuść gdziekolwiek, aby skoczyć.\n\nMożesz skakać w powietrzu, ale tylko kilka razy i każdy następny skok jest słabszy.\n\nSkoki odnawiają się po zatrzymaniu się na platformie.\n\nTwój wynik zależy od osiągniętej wysokości i liczby zebranych gwiazdek.\n\nJeżeli grasz na telefonie, polecam obrócić ekran\n\nPowodzenia!',
-	opacity: 0.75
-});
 
 function onFrame(event) {
 	if(stop) {
@@ -290,7 +340,7 @@ function onFrame(event) {
 			checkEndingPlatformCollision();
 		
 		if(star) {
-			if(player.position.getDistance(star.position) < 25) {
+			if(player.position.getDistance(star.position) < 30) {
 				star.clear();
 				++starCount;
 			}
@@ -504,15 +554,5 @@ function onMouseUp(event) {
 }
 
 function onResize() {
-    leftBorder = new Path.Rectangle({
-		point: [0, 0],
-		size: [10, view.size.height],
-		fillColor: 'black'
-	});
-
-	rightBorder = new Path.Rectangle({
-		point: [view.size.width - 10, 0],
-		size: [10, view.size.height],
-		fillColor: 'black'
-	});
+	reset();
 }
