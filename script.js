@@ -74,7 +74,7 @@ function beginGameWonAnimation() {
 
 function generateStar() {
 	star = new Path.Star(new Point(getRndInteger(20, view.size.width - 20), -20), 5, 40, 15);
-	star.fillColor = 'green';
+	star.fillColor = 'orange';
 	star.opacity = 0.75;
 }
 
@@ -173,7 +173,7 @@ function reset() {
 		point: view.center + new Point(0, -100),
 		justification: 'center',
 		fontSize: 20,
-		fillColor: 'green',
+		fillColor: 'orange',
 		content: 'Przeciągnij i upuść gdziekolwiek, aby skoczyć.\n\nMożesz skakać w powietrzu, ale tylko kilka razy i każdy następny skok jest słabszy.\n\nSkoki odnawiają się po zatrzymaniu się na platformie.\n\nTwój wynik zależy od osiągniętej wysokości i liczby zebranych gwiazdek.\n\nJeżeli grasz na telefonie, polecam obrócić ekran\n\nPowodzenia!',
 		opacity: 0.75
 	});
@@ -332,9 +332,11 @@ function onFrame(event) {
 		
 		platforms = platforms.slice(-15);
 		
-		platforms.forEach( function(platform) {
-			checkCollision(platform);
+		var closestPlatform = platforms.reduce(function(prev, current) {
+			return Math.abs(player.position.y - prev.position.y) < Math.abs(player.position.y - current.position.y) ? prev : current;
 		});
+		
+		checkCollision(closestPlatform);
 		
 		if(endingPlatform)
 			checkEndingPlatformCollision();
@@ -554,5 +556,7 @@ function onMouseUp(event) {
 }
 
 function onResize() {
-	reset();
+	if(!gameOver && !gameWon) {
+		reset();
+	}
 }
