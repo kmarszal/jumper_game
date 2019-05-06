@@ -180,18 +180,19 @@ function reset() {
 }
 
 function generatePlatform() {
+	var platformWidth = getRndInteger(view.size.width/20, view.size.width/3);
 	platforms.push(new Path.Rectangle({
-		point: [getRndInteger(0, view.size.width), -20],
-		size: [getRndInteger(view.size.width/20, view.size.width/3), getRndInteger(5, 20)],
+		point: [getRndInteger(0, view.size.width - platformWidth), -20],
+		size: [platformWidth, getRndInteger(5, 20)],
 		fillColor: 'black'
 	}));
 }
 
 function generateStartingPlatform(height) {
-	//starting platform
+	var platformWidth = getRndInteger(view.size.width/20, view.size.width/3);
 	platforms.push(new Path.Rectangle({
-		point: [getRndInteger(0, view.size.width), height - 20],
-		size: [getRndInteger(view.size.width/20, view.size.width/3), getRndInteger(5, 20)],
+		point: [getRndInteger(0, view.size.width - platformWidth), height - 20],
+		size: [platformWidth, getRndInteger(5, 20)],
 		fillColor: 'black'
 	}));
 }
