@@ -212,8 +212,8 @@ function generateEndingPlatform() {
 }
 
 function checkEndingPlatformCollision() {
-	if(player.position.y < endingPlatform.position.y - endingPlatform.bounds.height/2 + 5 &&
-	player.position.y > endingPlatform.position.y - endingPlatform.bounds.height/2 - 5 && speedVector.y > 0) {
+	if(lastPosition.y - 2 < endingPlatform.position.y - endingPlatform.bounds.height/2 &&
+	player.position.y + 7 > endingPlatform.position.y - endingPlatform.bounds.height/2 - 5) {
 		if(Math.sqrt(Math.pow(speedVector.x, 2) + Math.pow(speedVector.y, 2)) < 2.5) {
 			speedVector = new Point(0, 0);
 			jumpsMidAir = 0;
@@ -230,7 +230,7 @@ function checkEndingPlatformCollision() {
 		if(speedVector.x < 0) {
 			speedVector -= friction;
 		}
-		player.position.y = endingPlatform.position.y - endingPlatform.bounds.height / 2 - 5;
+		player.position.y = endingPlatform.position.y - endingPlatform.bounds.height / 2 - 12;
 	}
 }
 
@@ -325,7 +325,7 @@ function onFrame(event) {
 				generatePlatform();
 			}
 			
-			if(currentHeight > 0 && currentHeight - starGeneratedAt > 2 * view.size.height) {
+			if(currentHeight > 0 && currentHeight - starGeneratedAt > (endHeight - 1000) / 5 ) {
 				starGeneratedAt = currentHeight;
 				generateStar();
 			}
@@ -357,7 +357,7 @@ function gameOverAnimation() {
 	if(gameOverBlock.position.y > view.center.y) {
 		descendVector = new Point(0, 0);
 		var gameOverText = new PointText({
-			point: view.center + new Point(0, -150),
+			point: view.center + new Point(0, -100),
 			justification: 'center',
 			fontSize: 30,
 			fillColor: 'white',
@@ -375,7 +375,7 @@ function gameOverAnimation() {
 		gameOverText.insertAbove(gameOverBlock);
 		
 		var heightText = new PointText({
-			point: view.center + new Point(0, 50),
+			point: view.center + new Point(0, 0),
 			justification: 'center',
 			fontSize: 20,
 			fillColor: 'white',
@@ -383,7 +383,7 @@ function gameOverAnimation() {
 		});
 		
 		var starText = new PointText({
-			point: view.center + new Point(0, 150),
+			point: view.center + new Point(0, 50),
 			justification: 'center',
 			fontSize: 20,
 			fillColor: 'white',
@@ -394,7 +394,7 @@ function gameOverAnimation() {
 		var starScore = Math.round(starCount / maxStars * 50) / 100;
 		
 		var scoreText = new PointText({
-			point: view.center + new Point(0, 250),
+			point: view.center + new Point(0, 100),
 			justification: 'center',
 			fontSize: 20,
 			fillColor: 'white',
@@ -415,7 +415,7 @@ function gameWonAnimation() {
 	if(endingPlatform.position.y > view.size.height - 20) {
 		descendVector = new Point(0, 0);
 		var gameOverText = new PointText({
-			point: view.center + new Point(0, -150),
+			point: view.center + new Point(0, -75),
 			justification: 'center',
 			fontSize: 30,
 			fillColor: 'black',
@@ -424,7 +424,7 @@ function gameWonAnimation() {
 		gameOverText.insertAbove(gameOverBlock);
 		
 		var gameOverText = new PointText({
-			point: view.center + new Point(0, -50),
+			point: view.center + new Point(0, -25),
 			justification: 'center',
 			fontSize: 20,
 			fillColor: 'black',
@@ -433,7 +433,7 @@ function gameWonAnimation() {
 		gameOverText.insertAbove(gameOverBlock);
 		
 		var starText = new PointText({
-			point: view.center + new Point(0, 50),
+			point: view.center + new Point(0, 25),
 			justification: 'center',
 			fontSize: 20,
 			fillColor: 'black',
@@ -445,7 +445,7 @@ function gameWonAnimation() {
 		var starScore = Math.round(starCount / maxStars * 50) / 100;
 		
 		var scoreText = new PointText({
-			point: view.center + new Point(0, 150),
+			point: view.center + new Point(0, 75),
 			justification: 'center',
 			fontSize: 20,
 			fillColor: 'black',
