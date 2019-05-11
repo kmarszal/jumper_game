@@ -120,8 +120,14 @@ var jumpsLimit;
 var starCount;
 var maxStars;
 var endHeight;
+var score;
+
+var config_endpoint = "/jumper/config";
+var postScore_endpoint = "/jumper/end";
+var scoreSent = false;
 
 var instructionText;
+getJSON(config_endpoint, afterConfigFetched);
 
 function reset() {
 	leftBorder.clear();
@@ -156,7 +162,7 @@ function reset() {
 	gravity = new Point(0, -0.1);
 	friction = new Point(-0.1, 0);
 
-	descendVector = new Point(0, -0.5);
+	descendVector = getDescendVector();
 
 	initPlatforms();
 
@@ -255,6 +261,10 @@ function initPlatforms() {
 
 function onFrame(event) {
 	if(stop) {
+		if(!scoreSent) {
+			scoreSent = true;
+			sendScoreAndReturnControl(score);
+		}
 		return;
 	}
 	if(gameOver) {
@@ -402,6 +412,7 @@ function gameOverAnimation() {
 		});
 		
 		gameOverText.insertAbove(gameOverBlock);
+		score = Math.round((heightScore + starScore) * 100) / 100;
 		stop = true;
 	}
 }
@@ -451,7 +462,7 @@ function gameWonAnimation() {
 			fillColor: 'black',
 			content: 'Twój wynik: ' + heightScore + ' (za wysokość) + ' + starScore + ' (za gwiazdki) + ' + topScore + ' (za ukończenie gry) = ' + Math.round((heightScore + starScore + topScore) * 100) / 100 + ' / 1.0'
 		});
-		
+		score = Math.round((heightScore + starScore + topScore) * 100) / 100;
 		stop = true;
 	}
 }
@@ -560,4 +571,66 @@ function onResize() {
 	if(!gameOver && !gameWon) {
 		reset();
 	}
+}
+
+
+
+function getJSON(link, callback) {
+	console.log("Sending request for config: " + link);
+    var xobj = new XMLHttpRequest();
+    xobj.overrideMimeType("application/json");
+    xobj.open('GET', link, false);
+    xobj.send(null);
+    callback(xobj.responseText);
+}
+
+function afterConfigFetched(configJSON){
+    console.log("Got response: " + configJSON);
+    window.name = configJSON
+}
+
+function sendScoreAndReturnControl(score){
+    var adapterData = JSON.parse(window.name);
+    postScoreJson(postScore_endpoint, score);
+}
+
+function getDescendVector() {
+    var age = JSON.parse(window.name)["age"];
+    //var age = 7;
+    if(age < 8) {
+        return new Point(0, 0);
+    } else if (age < 13) {
+        return new Point(0, -0.25);
+    } else {
+        return new Point(0, -0.5);
+    }
+}
+
+function postScoreJson(link, score) {
+    var data = JSON.parse(window.name);
+
+    var xobj = new XMLHttpRequest();
+    xobj.open('POST', link, true);
+    xobj.overrideMimeType("application/json");
+    xobj.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xobj.withCredentials = true;
+
+    xobj.onreadystatechange = function() {
+        if (xobj.readyState === 4 && xobj.status === 200) {
+            console.log(xobj.responseText);
+            window.location = xobj.responseText
+        }
+    };
+
+    var sentPayload =
+        JSON.stringify(
+            {
+                group : data["group"],
+                nick : data["nick"],
+                age : data["age"],
+                result : score
+            }
+        );
+    console.log("Sending: " + sentPayload)
+    xobj.send(sentPayload);
 }
